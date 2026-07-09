@@ -1,0 +1,21 @@
+# Basic single-host Ingress. No TLS/cert-manager wiring yet — add once a real
+# domain and certificate issuer are decided (deferred to the backend phase).
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: facem-web
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: facem.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: facem-web
+                port:
+                  number: 80

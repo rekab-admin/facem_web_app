@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: facem-web
+  labels:
+    app: facem-web
+spec:
+  type: ClusterIP
+  selector:
+    app: facem-web
+  ports:
+    - port: 80
+      targetPort: 3000
+      protocol: TCP
