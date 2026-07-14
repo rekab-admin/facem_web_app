@@ -1,7 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 
+import { useElementSize } from "@/hooks/useElementSize";
+import { distance } from "@/lib/geometry";
+import { drawFacialPointsOnCanvas, prepareCanvas } from "@/lib/vision/drawOverlay";
 import type { FacialPoint } from "@/lib/types";
 
 interface FaceCanvasOverlayProps {
@@ -12,69 +15,20 @@ interface FaceCanvasOverlayProps {
   onDragEnd?: (points: FacialPoint[]) => void;
 }
 
-const LINES: Array<[string, string]> = [
-  ["leftPupil", "rightPupil"],
-  ["noseBridgeLeft", "noseBridgeRight"],
-  ["leftTemple", "rightTemple"],
-  ["rightTemple", "chin"],
-];
-
 const HIT_RADIUS_NORMALIZED = 0.035;
 
 export function FaceCanvasOverlay({ imageUrl, points, editable = false, onPointsChange, onDragEnd }: FaceCanvasOverlayProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
+  const { ref: containerRef, size } = useElementSize<HTMLDivElement>();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const draggingIdRef = useRef<string | null>(null);
-  const [size, setSize] = useState({ width: 0, height: 0 });
-
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    const observer = new ResizeObserver(([entry]) => {
-      setSize({ width: entry.contentRect.width, height: entry.contentRect.height });
-    });
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas || size.width === 0) return;
 
-    const dpr = window.devicePixelRatio || 1;
-    canvas.width = size.width * dpr;
-    canvas.height = size.height * dpr;
-    canvas.style.width = `${size.width}px`;
-    canvas.style.height = `${size.height}px`;
-
-    const ctx = canvas.getContext("2d");
+    const ctx = prepareCanvas(canvas, size.width, size.height);
     if (!ctx) return;
-    ctx.scale(dpr, dpr);
-    ctx.clearRect(0, 0, size.width, size.height);
-
-    const byId = Object.fromEntries(points.map((p) => [p.id, p]));
-
-    ctx.strokeStyle = "rgba(59, 130, 246, 0.8)";
-    ctx.lineWidth = 1.5;
-    for (const [fromId, toId] of LINES) {
-      const from = byId[fromId];
-      const to = byId[toId];
-      if (!from || !to) continue;
-      ctx.beginPath();
-      ctx.moveTo(from.x * size.width, from.y * size.height);
-      ctx.lineTo(to.x * size.width, to.y * size.height);
-      ctx.stroke();
-    }
-
-    for (const point of points) {
-      ctx.beginPath();
-      ctx.arc(point.x * size.width, point.y * size.height, 5, 0, Math.PI * 2);
-      ctx.fillStyle = "#3b82f6";
-      ctx.fill();
-      ctx.strokeStyle = "white";
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
-    }
+    drawFacialPointsOnCanvas(ctx, points, size.width, size.height);
   }, [points, size]);
 
   function toNormalized(clientX: number, clientY: number) {
@@ -94,7 +48,7 @@ export function FaceCanvasOverlay({ imageUrl, points, editable = false, onPoints
     let closestId: string | null = null;
     let closestDist = HIT_RADIUS_NORMALIZED;
     for (const point of points) {
-      const d = Math.hypot(point.x - pos.x, point.y - pos.y);
+      const d = distance(point, pos);
       if (d < closestDist) {
         closestDist = d;
         closestId = point.id;

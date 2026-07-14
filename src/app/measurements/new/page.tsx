@@ -3,12 +3,13 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-import { ImageUploader } from "@/components/ImageUploader";
+import { ConsentGate } from "@/components/ConsentGate";
+import { LiveCameraCapture } from "@/components/LiveCameraCapture";
 import { ProcessingSpinner } from "@/components/ProcessingSpinner";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import type { FacialPoint } from "@/lib/types";
 import { useMeasurementsStore } from "@/store/measurementsStore";
 
 export default function NewMeasurementPage() {
@@ -16,22 +17,30 @@ export default function NewMeasurementPage() {
   const create = useMeasurementsStore((s) => s.create);
   const isCreating = useMeasurementsStore((s) => s.isCreating);
 
+  const [acknowledged, setAcknowledged] = useState(false);
   const [customerName, setCustomerName] = useState("");
-  const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const canSubmit = customerName.trim().length > 0 && file !== null && !isCreating;
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!file) return;
+  async function handleCapture({ file, points, mmPerUnit }: { file: File; points: FacialPoint[]; mmPerUnit: number }) {
+    if (!customerName.trim()) {
+      setError("Enter a customer name before capturing.");
+      return;
+    }
     setError(null);
     try {
-      const created = await create({ customerName: customerName.trim(), image: file });
+      const created = await create({ customerName: customerName.trim(), image: file, points, mmPerUnit });
       router.push(`/measurements/${created.id}`);
     } catch {
-      setError("Something went wrong processing this photo. Please try again.");
+      setError("Something went wrong saving this measurement. Please try again.");
     }
+  }
+
+  if (!acknowledged) {
+    return (
+      <div className="mx-auto max-w-lg">
+        <ConsentGate onAcknowledge={() => setAcknowledged(true)} />
+      </div>
+    );
   }
 
   return (
@@ -39,16 +48,16 @@ export default function NewMeasurementPage() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">New Measurement</h1>
         <p className="text-sm text-muted-foreground">
-          Upload a front-facing photo to detect facial landmarks and compute fitting dimensions.
+          Look at the camera — facial landmarks and fitting dimensions are detected automatically, no calibration object needed.
         </p>
       </div>
 
       <Card>
-        <CardContent>
+        <CardContent className="space-y-5">
           {isCreating ? (
-            <ProcessingSpinner label="Detecting facial landmarks…" />
+            <ProcessingSpinner label="Saving measurement…" />
           ) : (
-            <form className="space-y-5" onSubmit={handleSubmit}>
+            <>
               <div className="space-y-1.5">
                 <Label htmlFor="customerName">Customer name</Label>
                 <Input
@@ -60,17 +69,10 @@ export default function NewMeasurementPage() {
                 />
               </div>
 
-              <div className="space-y-1.5">
-                <Label>Photo</Label>
-                <ImageUploader onFileSelected={setFile} disabled={isCreating} />
-              </div>
+              <LiveCameraCapture onCapture={handleCapture} disabled={isCreating} />
 
               {error && <p className="text-sm text-destructive">{error}</p>}
-
-              <Button type="submit" disabled={!canSubmit} className="w-full">
-                Detect Measurements
-              </Button>
-            </form>
+            </>
           )}
         </CardContent>
       </Card>

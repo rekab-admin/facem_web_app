@@ -9,7 +9,7 @@ import { MeasurementTable } from "@/components/MeasurementTable";
 import { ProcessingSpinner } from "@/components/ProcessingSpinner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { computeDimensions, recommendFrameSize } from "@/lib/mockData";
+import { computeDimensions, determineFaceShape, recommendFrameSize } from "@/lib/mockData";
 import type { FacialPoint } from "@/lib/types";
 import { useMeasurementsStore } from "@/store/measurementsStore";
 
@@ -92,7 +92,7 @@ export default function MeasurementDetailPage({ params }: PageProps) {
           />
           <div className="flex items-center justify-between">
             <p className="text-xs text-muted-foreground">
-              {isEditing ? "Drag a point to correct its position." : "Landmark points detected from the uploaded photo."}
+              {isEditing ? "Drag a point to correct its position." : "Landmark points detected from your camera."}
             </p>
             {isEditing ? (
               <Button size="sm" onClick={handleDoneEditing}>
@@ -113,6 +113,7 @@ export default function MeasurementDetailPage({ params }: PageProps) {
               recommendedFrameSize={
                 liveDimensions ? recommendFrameSize(liveDimensions.faceWidthMm) : measurement.recommendedFrameSize
               }
+              faceShape={liveDimensions ? determineFaceShape(liveDimensions) : measurement.faceShape}
             />
           </CardContent>
         </Card>

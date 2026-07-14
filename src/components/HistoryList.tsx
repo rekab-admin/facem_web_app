@@ -41,6 +41,7 @@ export function HistoryList({ measurements, onDelete }: HistoryListProps) {
               <TableHead>Customer</TableHead>
               <TableHead>Date</TableHead>
               <TableHead>Frame size</TableHead>
+              <TableHead>Face shape</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -57,6 +58,9 @@ export function HistoryList({ measurements, onDelete }: HistoryListProps) {
                 </TableCell>
                 <TableCell>
                   <Badge variant="secondary">{m.recommendedFrameSize}</Badge>
+                </TableCell>
+                <TableCell>
+                  <Badge variant="outline">{m.faceShape}</Badge>
                 </TableCell>
                 <TableCell className="text-right">
                   <Button variant="destructive" size="sm" onClick={() => onDelete(m.id)}>

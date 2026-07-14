@@ -1,20 +1,24 @@
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import type { MeasurementDimensions, FrameSize } from "@/lib/types";
+import type { MeasurementDimensions, FrameSize, FaceShape } from "@/lib/types";
 
 const ROWS: Array<{ key: keyof MeasurementDimensions; label: string }> = [
   { key: "pupillaryDistanceMm", label: "Pupillary distance" },
   { key: "faceWidthMm", label: "Face width" },
   { key: "bridgeWidthMm", label: "Bridge width" },
   { key: "templeLengthMm", label: "Temple length" },
+  { key: "faceLengthMm", label: "Face length" },
+  { key: "foreheadWidthMm", label: "Forehead width" },
+  { key: "jawWidthMm", label: "Jaw width" },
 ];
 
 interface MeasurementTableProps {
   dimensions: MeasurementDimensions;
   recommendedFrameSize: FrameSize;
+  faceShape: FaceShape;
 }
 
-export function MeasurementTable({ dimensions, recommendedFrameSize }: MeasurementTableProps) {
+export function MeasurementTable({ dimensions, recommendedFrameSize, faceShape }: MeasurementTableProps) {
   return (
     <div className="space-y-4">
       <Table>
@@ -37,6 +41,10 @@ export function MeasurementTable({ dimensions, recommendedFrameSize }: Measureme
       <div className="flex items-center gap-2 text-sm">
         <span className="text-muted-foreground">Recommended frame size:</span>
         <Badge variant="default">{recommendedFrameSize}</Badge>
+      </div>
+      <div className="flex items-center gap-2 text-sm">
+        <span className="text-muted-foreground">Face shape:</span>
+        <Badge variant="outline">{faceShape}</Badge>
       </div>
     </div>
   );

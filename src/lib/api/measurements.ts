@@ -1,4 +1,4 @@
-import { computeDimensions, createSeedMeasurements, generatePoints, randomMmPerUnit, recommendFrameSize } from "@/lib/mockData";
+import { computeDimensions, createSeedMeasurements, determineFaceShape, generatePoints, randomMmPerUnit, recommendFrameSize } from "@/lib/mockData";
 import type { CreateMeasurementInput, FacialPoint, Measurement } from "@/lib/types";
 
 /**
@@ -10,7 +10,11 @@ import type { CreateMeasurementInput, FacialPoint, Measurement } from "@/lib/typ
  * database for this frontend-only phase.
  */
 
-const STORAGE_KEY = "facem:measurements";
+// Bumped when the Measurement shape changes incompatibly (e.g. new required
+// fields) so stale pre-change localStorage data cleanly reseeds instead of
+// rendering with missing fields — this is mock/local-only data, no real
+// migration needed (see CLAUDE.md's "no backend yet").
+const STORAGE_KEY = "facem:measurements:v2";
 const UPLOAD_DELAY_MS = 1500;
 const REQUEST_DELAY_MS = 300;
 
@@ -71,8 +75,11 @@ export async function createMeasurement(input: CreateMeasurementInput): Promise<
   const imageUrl = await fileToDataUrl(input.image);
   await delay(UPLOAD_DELAY_MS);
 
-  const points = generatePoints();
-  const mmPerUnit = randomMmPerUnit();
+  // input.points/mmPerUnit come from real MediaPipe detection (LiveCameraCapture).
+  // The mock generators remain as a fallback and are still what createSeedMeasurements()
+  // uses for dashboard/history demo data — see docs/COMPUTER_VISION.md.
+  const points = input.points ?? generatePoints();
+  const mmPerUnit = input.mmPerUnit ?? randomMmPerUnit();
   const dimensions = computeDimensions(points, mmPerUnit);
 
   const measurement: Measurement = {
@@ -84,6 +91,7 @@ export async function createMeasurement(input: CreateMeasurementInput): Promise<
     mmPerUnit,
     dimensions,
     recommendedFrameSize: recommendFrameSize(dimensions.faceWidthMm),
+    faceShape: determineFaceShape(dimensions),
     status: "complete",
   };
 
@@ -105,6 +113,7 @@ export async function updateMeasurementPoints(id: string, points: FacialPoint[])
     points,
     dimensions,
     recommendedFrameSize: recommendFrameSize(dimensions.faceWidthMm),
+    faceShape: determineFaceShape(dimensions),
   };
 
   current[index] = updated;

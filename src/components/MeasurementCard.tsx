@@ -21,7 +21,10 @@ export function MeasurementCard({ measurement }: { measurement: Measurement }) {
               {new Date(measurement.createdAt).toLocaleDateString("en-ZA", { dateStyle: "medium" })}
             </p>
           </div>
-          <Badge variant="secondary">Frame {measurement.recommendedFrameSize}</Badge>
+          <div className="flex shrink-0 flex-col items-end gap-1">
+            <Badge variant="secondary">Frame {measurement.recommendedFrameSize}</Badge>
+            <Badge variant="outline">{measurement.faceShape}</Badge>
+          </div>
         </CardContent>
       </Card>
     </Link>
